@@ -1,0 +1,10 @@
+{
+  "votes": {
+    "Alice": 1,
+    "Bob": 0,
+    "Charlie": 0
+  },
+  "votedUsers": {
+    "21bcs201": "Alice"
+  }
+}
