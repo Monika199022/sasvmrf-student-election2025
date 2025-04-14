@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Council Voting - SAS, VMRF</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f8ff;
+      padding: 30px;
+    }
+    h1, h2 {
+      color: #003366;
+      margin-bottom: 10px;
+    }
+    .menu, .section {
+      margin-top: 30px;
+    }
+    .hidden {
+      display: none;
+    }
+    input, button {
+      padding: 10px;
+      margin: 8px;
+      font-size: 16px;
+    }
+    .menu button {
+      padding: 12px 24px;
+      background-color: #004aad;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .menu button:hover {
+      background-color: #003580;
+    }
+    .vote-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin: 6px;
+    }
+    .vote-btn:hover {
+      background-color: #45a049;
+    }
+    .back-btn {
+      background-color: #ccc;
+      border: none;
+      padding: 8px 20px;
+      margin-top: 20px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .back-btn:hover {
+      background-color: #bbb;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>SAS, VMRF – Vinayaka Missions, Chennai Campus</h1>
+  <h2>Students Council Election 2025–2026</h2>
+
+  <!-- Menu -->
+  <div class="menu section" id="menu">
+    <button onclick="showSection('voterLogin')">Voter Login</button>
+    <button onclick="showSection('adminLogin')">Admin Login</button>
+  </div>
+
+  <!-- Voter Login -->
+  <div id="voterLogin" class="section hidden">
+    <h3>Voter Login</h3>
+    <input type="text" id="voterID" placeholder="Register Number or Email" />
+    <br />
+    <button onclick="verifyVoter()">Proceed</button>
+    <p id="idError" style="color: red;"></p>
+    <br />
+    <button class="back-btn" onclick="showSection('menu')">← Back</button>
+  </div>
+
+  <!-- Voting Section -->
+  <div id="votingSection" class="section hidden">
+    <h3>Welcome, <span id="voterLabel"></span>!</h3>
+    <p>Select your candidate:</p>
+    <button class="vote-btn" onclick="castVote('Alice')">Vote for Alice</button>
+    <button class="vote-btn" onclick="castVote('Bob')">Vote for Bob</button>
+    <button class="vote-btn" onclick="castVote('Charlie')">Vote for Charlie</button>
+    <p id="voteStatus" style="color: green; font-weight: bold;"></p>
+    <br />
+    <button class="back-btn" onclick="showSection('menu')">← Back</button>
+  </div>
+
+  <!-- Admin Login -->
+  <div id="adminLogin" class="section hidden">
+    <h3>Admin Login</h3>
+    <input type="email" id="adminEmail" placeholder="Admin Email" />
+    <br />
+    <button onclick="verifyAdmin()">Login as Admin</button>
+    <p id="adminError" style="color: red;"></p>
+    <br />
+    <button class="back-btn" onclick="showSection('menu')">← Back</button>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminPanel" class="section hidden">
+    <h3>Vote Results (Admin View)</h3>
+    <p>Alice: <span id="countAlice">0</span></p>
+    <p>Bob: <span id="countBob">0</span></p>
+    <p>Charlie: <span id="countCharlie">0</span></p>
+    <br />
+    <button onclick="downloadResults()">Download Results (CSV)</button>
+    <br /><br />
+    <button class="back-btn" onclick="showSection('menu')">← Back</button>
+  </div>
+
+  <script>
+    let votes = { Alice: 0, Bob: 0, Charlie: 0 };
+
+    // Load stored votes from localStorage
+    const storedVotes = localStorage.getItem("votes");
+    if (storedVotes) votes = JSON.parse(storedVotes);
+
+    function showSection(id) {
+      document.querySelectorAll(".section").forEach(div => div.classList.add("hidden"));
+      if (id === "menu") {
+        document.getElementById("menu").classList.remove("hidden");
+      } else {
+        document.getElementById(id).classList.remove("hidden");
+      }
+    }
+
+    function updateCounts() {
+      document.getElementById("countAlice").innerText = votes.Alice;
+      document.getElementById("countBob").innerText = votes.Bob;
+      document.getElementById("countCharlie").innerText = votes.Charlie;
+    }
+
+    function verifyVoter() {
+      const id = document.getElementById("voterID").value.trim().toLowerCase();
+      const errorElem = document.getElementById("idError");
+      if (!id) {
+        errorElem.innerText = "Please enter your Register Number or Email.";
+        return;
+      }
+
+      const votedUsers = JSON.parse(localStorage.getItem("votedUsers") || "{}");
+      if (votedUsers[id]) {
+        errorElem.innerText = "This ID has already voted.";
+      } else {
+        localStorage.setItem("currentVoter", id);
+        document.getElementById("voterLabel").innerText = id;
+        showSection("votingSection");
+        errorElem.innerText = "";
+      }
+    }
+
+    function castVote(candidate) {
+      const id = localStorage.getItem("currentVoter");
+      if (!id) return;
+
+      votes[candidate]++;
+      localStorage.setItem("votes", JSON.stringify(votes));
+
+      const votedUsers = JSON.parse(localStorage.getItem("votedUsers") || "{}");
+      votedUsers[id] = candidate;
+      localStorage.setItem("votedUsers", JSON.stringify(votedUsers));
+
+      document.getElementById("voteStatus").innerText = `Thank you! You voted for ${candidate}.`;
+      document.querySelectorAll(".vote-btn").forEach(btn => btn.disabled = true);
+      localStorage.removeItem("currentVoter");
+    }
+
+    function verifyAdmin() {
+      const email = document.getElementById("adminEmail").value.trim().toLowerCase();
+      const ADMIN_EMAIL = "monikagphd@gmail.com";
+      if (email === ADMIN_EMAIL) {
+        showSection("adminPanel");
+        updateCounts();
+        document.getElementById("adminError").innerText = "";
+      } else {
+        document.getElementById("adminError").innerText = "Unauthorized email. Access denied.";
+      }
+    }
+
+    function downloadResults() {
+      const data = [
+        ["Candidate", "Votes"],
+        ["Alice", votes.Alice],
+        ["Bob", votes.Bob],
+        ["Charlie", votes.Charlie]
+      ];
+      let csvContent = "data:text/csv;charset=utf-8," + data.map(e => e.join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "voting_results.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Restore voter session
+    window.onload = function () {
+      const currentVoter = localStorage.getItem("currentVoter");
+      const votedUsers = JSON.parse(localStorage.getItem("votedUsers") || "{}");
+
+      if (currentVoter && !votedUsers[currentVoter]) {
+        showSection("votingSection");
+        document.getElementById("voterLabel").innerText = currentVoter;
+      }
+    };
+  </script>
+</body>
+</html>
